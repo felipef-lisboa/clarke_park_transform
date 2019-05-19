@@ -7,21 +7,28 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # Function to transform abc to dq0
-def dq0_transform(a, b, c, delta):
-	delta_b = delta - (2*np.pi/3)
-	delta_c = delta + (2*np.pi/3)
-	d = np.sqrt(2/3)*(a*np.cos(delta)+b*np.cos(delta_b)+c*np.cos(delta_c))
-	q = np.sqrt(2/3)*(-a*np.sin(delta)-b*np.sin(delta_b)-c*np.sin(delta_c))
-	z = np.sqrt(2/3)*np.sqrt(1/2)*(a+b+c)
-	return d, q, z
-#     d=(np.sqrt(2/3)*v_a-(1/(np.sqrt(6)))*v_b-(1/(np.sqrt(6)))*v_c)
-#     q=((1/(np.sqrt(2)))*v_b-(1/(np.sqrt(2)))*v_c)
-#     return d, q
+def abc_to_alphaBeta0(a, b, c):
+	alpha = np.sqrt(2/3)*(a - b/2 - c/2)
+	beta = np.sqrt(2/3)*np.sqrt(3)*(b/2 - c/2)
+	z = (np.sqrt(2/3)/np.sqrt(2))*(a+b+c)
+	return alpha, beta, z
+
+def alphaBeta0_to_dq0(a, b, c, delta):
+  d = a*np.cos(thetas+delta)+b*np.sin(thetas+delta)
+  q = b*np.cos(thetas+delta)-a*np.sin(thetas+delta)
+  z = c
+  return d, q, z
+
+def abc_to_dq0(a, b, c, delta):
+  d = np.sqrt(2/3)*(a*np.cos(thetas+delta) + b*np.cos(thetas+delta-(2*np.pi/3))+ c*np.cos(thetas+delta+(2*np.pi/3)))
+  q = np.sqrt(2/3)*(-a*np.sin(thetas+delta) - b*np.sin(thetas+delta-(2*np.pi/3)) - c*np.sin(thetas+delta+(2*np.pi/3)))
+  z = (np.sqrt(2/3)/np.sqrt(2))*(a+b+c)
+  return d, q, z
 
 # User configurable
 freq = 1/60
 end_time = 180
-v_peak = 220
+v_peak = 100
 step_size = 0.01
 # Find the three-phase voltages
 Va = []
@@ -29,25 +36,35 @@ Vb = []
 Vc = []
 thetas = 2 * np.pi * freq * np.arange(0,end_time,step_size)
 for ii, t in enumerate(thetas):
-    Va.append(v_peak * np.sin(t))
-    Vb.append(v_peak * np.sin(t - (2/3)*np.pi))
-    Vc.append(v_peak * np.sin(t - (4/3)*np.pi))
+  Va.append((v_peak+50) * np.sin(t))
+  Vb.append((v_peak) * np.sin(t - (2/3)*np.pi))
+  Vc.append((v_peak) * np.sin(t + (2/3)*np.pi))
 Va, Vb, Vc = np.array(Va), np.array(Vb), np.array(Vc)
 
 # Calculate the dq0 system
-d, q, z= dq0_transform(Va, Vb, Vc, 0)
+alpha, beta, zero1= abc_to_alphaBeta0(Va, Vb, Vc)
+d, q, zero2 = abc_to_dq0(Va,Vb,Vc, 0)
 
 # Plot the 3-phase system
-plt.subplot(211)
+plt.subplot(311)
 plt.plot(Va, label="Va")
 plt.plot(Vb, label="Vb")
 plt.plot(Vc, label="Vc")
 plt.xlabel('Time')
 plt.ylabel('Voltage')
 plt.legend(ncol=3,loc=4)
+# Plot the alphaBeta0 system
+plt.subplot(312)
+plt.plot(alpha, label="alpha")
+plt.plot(beta, label="beta")
+plt.plot(zero1, label="zero")
+plt.legend(ncol=3,loc=4)
 # Plot the dq0 system
-plt.subplot(212)
+plt.subplot(313)
 plt.plot(d, label="d")
 plt.plot(q, label="q")
-plt.plot(z, label="z")
+plt.plot(zero2, label="zero")
+plt.legend(ncol=3,loc=4)
 plt.show()
+#plt.savefig('plot.png')
+print('Plot done')
