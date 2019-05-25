@@ -1,27 +1,25 @@
 #! /usr/bin/python3
-
 # This file is a library for transformation functions
 
-######
-FUNÇÕES QUE FALTAM:
-	- abc_to_alphaBeta0
-	- alphaBeta0_to_dq0
-	- dq0_to_alphaBeta0
-	- alphaBeta0_to_abc 
-######
+import numpy as np
 
-def abc_to_dq0(a, b, c, delta):
-	delta_b = delta - (2*np.pi/3)
-	delta_c = delta + (2*np.pi/3)
-	d = np.sqrt(2/3)*(a*np.cos(delta)+b*np.cos(delta_b)+c*np.cos(delta_c))
-	q = np.sqrt(2/3)*(-a*np.sin(delta)-b*np.sin(delta_b)-c*np.sin(delta_c))
-	z = np.sqrt(2/3)*np.sqrt(1/2)*(a+b+c)
-	return d, q, z
+# Function to transform abc to alphaBeta0
+def abc_to_alphaBeta0(a, b, c):
+	alpha = np.sqrt(2/3)*(a - b/2 - c/2)
+	beta = np.sqrt(2/3)*np.sqrt(3)*(b/2 - c/2)
+	z = (np.sqrt(2/3)/np.sqrt(2))*(a+b+c)
+	return alpha, beta, z
 
-def dq0_to_abc(d, q, z, delta):
+# Function to transform alphaBeta0 to dq0
+def alphaBeta0_to_dq0(a, b, c, wt, delta):
+  d = a*np.cos(wt+delta)+b*np.sin(wt+delta)
+  q = b*np.cos(wt+delta)-a*np.sin(wt+delta)
+  z = c
+  return d, q, z
 
-	######
-	# ESCREVER FUNÇÃO AQUI
-	######
-
-	return a, b, c
+# Function to directly transform abc to dq0
+def abc_to_dq0(a, b, c, wt, delta):
+  d = np.sqrt(2/3)*(a*np.cos(wt+delta) + b*np.cos(wt+delta-(2*np.pi/3))+ c*np.cos(wt+delta+(2*np.pi/3)))
+  q = np.sqrt(2/3)*(-a*np.sin(wt+delta) - b*np.sin(wt+delta-(2*np.pi/3)) - c*np.sin(wt+delta+(2*np.pi/3)))
+  z = (np.sqrt(2/3)/np.sqrt(2))*(a+b+c)
+  return d, q, z
