@@ -36,7 +36,7 @@ Vb = []
 Vc = []
 thetas = 2 * np.pi * freq * np.arange(0,end_time,step_size)
 for ii, t in enumerate(thetas):
-  Va.append((v_peak+50) * np.sin(t))
+  Va.append((v_peak) * np.sin(t))
   Vb.append((v_peak) * np.sin(t - (2/3)*np.pi))
   Vc.append((v_peak) * np.sin(t + (2/3)*np.pi))
 Va, Vb, Vc = np.array(Va), np.array(Vb), np.array(Vc)
@@ -47,9 +47,9 @@ d, q, zero2 = abc_to_dq0(Va,Vb,Vc, 0)
 
 # Plot the 3-phase system
 plt.subplot(311)
-plt.plot(Va, label="Va")
-plt.plot(Vb, label="Vb")
-plt.plot(Vc, label="Vc")
+plt.plot(thetas,Va, label="Va")
+plt.plot(thetas,Vb, label="Vb")
+plt.plot(thetas,Vc, label="Vc")
 plt.xlabel('Time')
 plt.ylabel('Voltage')
 plt.legend(ncol=3,loc=4)
