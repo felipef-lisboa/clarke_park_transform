@@ -23,3 +23,9 @@ def abc_to_dq0(a, b, c, wt, delta):
   q = np.sqrt(2/3)*(-a*np.sin(wt+delta) - b*np.sin(wt+delta-(2*np.pi/3)) - c*np.sin(wt+delta+(2*np.pi/3)))
   z = (np.sqrt(2/3)/np.sqrt(2))*(a+b+c)
   return d, q, z
+
+def dq0_to_abc(d, q, z, wt, delta):
+  a = np.sqrt(2/3)*(d*np.cos(wt+delta)-q*np.sin(wt+delta)+np.sqrt(1/2)*z)
+  b = np.sqrt(2/3)*(d*np.cos(wt+delta-(2*np.pi/3))-q*np.sin(wt+delta-(2*np.pi/3))+np.sqrt(1/2)*z)
+  c = np.sqrt(2/3)*(d*np.cos(wt+delta+(2*np.pi/3))-q*np.sin(wt+delta+(2*np.pi/3))+np.sqrt(1/2)*z)
+  return a, b, c

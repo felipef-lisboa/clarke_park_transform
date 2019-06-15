@@ -13,10 +13,10 @@ import transforms as trs
 ### Function that transforms and
 ### plots the results
 def ex_transform(*args):
-    if phaseA.get()=="" or phaseB.get()=="" or phaseC.get()=="" or freq.get()=="" or unit.get()=="":
+    if phaseA.get()=="" or phaseB.get()=="" or phaseC.get()=="" or freq.get()=="" or unit.get()=="" or delta.get()=="":
         return 0
     
-    end_time = 3/float(freq.get())
+    end_time = 10/float(freq.get())
     step_size = end_time/(1000)
     t = np.arange(0,end_time,step_size)
     wt = 2*np.pi*float(freq.get()) * t
@@ -33,30 +33,66 @@ def ex_transform(*args):
             C = (np.sqrt(2)*float(phaseC.get()))*np.sin(wt+(2*np.pi/3))
         else:
             return 0
+
+    # apply the fault
+    if fault.get() == 'Monophasic A':
+        for ii in range(int(len(t)/4), int(3*len(t)/4)):
+            A[ii]=0
+    elif fault.get() == 'Monophasic B':
+        for ii in range(int(len(t)/4), int(3*len(t)/4)):
+            B[ii]=0
+    elif fault.get() == 'Monophasic C':
+        for ii in range(int(len(t)/4), int(3*len(t)/4)):
+            C[ii]=0
+    elif fault.get() == 'Biphasic A-B':
+        for ii in range(int(len(t)/4), int(3*len(t)/4)):
+            A[ii]=0
+            B[ii]=0
+    elif fault.get() == 'Biphasic B-C':
+        for ii in range(int(len(t)/4), int(3*len(t)/4)):
+            B[ii]=0
+            C[ii]=0
+    elif fault.get() == 'Biphasic C-A':
+        for ii in range(int(len(t)/4), int(3*len(t)/4)):
+            C[ii]=0
+            A[ii]=0
+
+
+    delta_rad = float(delta.get())*np.pi/180 # convert delta to radians
+    # calling transformation functions
     alpha, beta, zero1 = trs.abc_to_alphaBeta0(A,B,C)
-    d, q, zero2 = trs.alphaBeta0_to_dq0(alpha, beta, zero1, wt, 0)
-    plt.clf()
+    d, q, zero2 = trs.alphaBeta0_to_dq0(alpha, beta, zero1, wt, delta_rad)
+    a,b,c = trs.dq0_to_abc(d, q, zero2, wt, delta_rad)
+
+    plt.clf() # clear any previous plots
     # Plot the 3-phase system
-    plt.subplot(311)
+    plt.subplot(411)
     plt.plot(t, A, label="A")
     plt.plot(t, B, label="B")
     plt.plot(t, C, label="C")
     plt.ylabel(unit.get())
     plt.legend(ncol=3,loc=4)
     # Plot the alphaBeta0 system
-    plt.subplot(312)
+    plt.subplot(412)
     plt.plot(t, alpha, label="\u03B1")
     plt.plot(t, beta, label="\u03B2")
     plt.plot(t, zero1, label="zero")
-    plt.ylabel('Voltage')
+    plt.ylabel(unit.get())
     plt.legend(ncol=3,loc=4)
     # Plot the dq0 system
-    plt.subplot(313)
+    plt.subplot(413)
     plt.plot(t, d, label="d")
     plt.plot(t, q, label="q")
     plt.plot(t, zero2, '-', label="zero")
     plt.xlabel('Time [s]')
-    plt.ylabel('Voltage')
+    plt.ylabel(unit.get())
+    plt.legend(ncol=3,loc=4)
+    # Plot the abc transformed from dq0
+    plt.subplot(414)
+    plt.plot(t, a, label="A")
+    plt.plot(t, b, label="B")
+    plt.plot(t, c, label="C")
+    plt.ylabel(unit.get())
     plt.legend(ncol=3,loc=4)
     plt.show()
 ########################################
@@ -74,21 +110,22 @@ root.rowconfigure(0, weight=1)
 
 validation = mainframe.register(validate_val)
 
-
 ### Creating variables to store user input
 phaseA = StringVar() # stores magnitude of phase A
 phaseB = StringVar() # stores magnitude of phase B
 phaseC = StringVar() # stores magnitude of phase C
 freq = StringVar() # stores the system frequency os oscilation
 unit = StringVar() # stores the system unit
+fault = StringVar() # stores the system fault type
 mag_val = StringVar() # stores the type of magnitude used
+delta = StringVar() # stores the angle in degrees between the A and d axis in clarke trans.
 ########################################
 
 # Creates label and Combobox for system unit
 ttk.Label(mainframe, text="Unit:").grid(column=1, row=1, sticky=E)
 unit_combobox = ttk.Combobox(mainframe, state="readonly", textvariable=unit, width=15)
 unit_combobox.grid(column=2,row=1, sticky=(W,E))
-unit_combobox['values'] = ('Voltage [V]', 'Current [A]', 'Magn. Flux [Wb]')
+unit_combobox['values'] = ('Voltage [V]', 'Voltage [kV]')
 unit_combobox.bind('<FocusOut>', lambda e: unit_combobox.selection_clear())
 ########################################
 
@@ -109,6 +146,14 @@ freq_entry = ttk.Entry(mainframe, validate="key", validatecommand=(validation, '
 freq_entry.grid(column=2, row=3, sticky=W)
 ########################################
 
+# Creates label and Combobox for fault type
+ttk.Label(mainframe, text="Fault:").grid(column=1, row=4, sticky=E)
+fault_combobox = ttk.Combobox(mainframe, state="readonly", textvariable=fault, width=15)
+fault_combobox.grid(column=2,row=4, sticky=(W,E))
+fault_combobox['values'] = ('None','Monophasic A', 'Monophasic B', 'Monophasic C', 'Biphasic A-B','Biphasic B-C','Biphasic C-A')
+fault_combobox.bind('<FocusOut>', lambda e: fault_combobox.selection_clear())
+########################################
+
 # Creates label and text entry for phase A
 ttk.Label(mainframe, text="Phase A:", padding=("10 0 0 0")).grid(column=3, row=1, sticky=E)
 phaseA_entry = ttk.Entry(mainframe, validate="key", validatecommand=(validation, '%S'), width=7, textvariable=phaseA)
@@ -127,9 +172,16 @@ phaseC_entry = ttk.Entry(mainframe, validate="key", validatecommand=(validation,
 phaseC_entry.grid(column=4, row=3, sticky=(W, E), pady=3)
 ########################################
 
+# Creates label and text entry for delta
+ttk.Label(mainframe, text="delta [degrees]:", padding=("10 0 0 0")).grid(column=3, row=4, sticky=E)
+delta_entry = ttk.Entry(mainframe, validate="key", validatecommand=(validation, '%S'), width=7, textvariable=delta)
+delta_entry.grid(column=4, row=4, sticky=(W,E), pady=3)
+########################################
+
+
 # Creates button to call transformation function
-trans_button = ttk.Button(mainframe, text="Transform", command=ex_transform,padding=("3 3 3 3"))
-trans_button.grid(column=4, row=4, pady= 10,sticky=E)
+trans_button = ttk.Button(mainframe, text="Calculte", command=ex_transform,padding=("3 3 3 3"))
+trans_button.grid(column=4, row=5, pady= 10,sticky=E)
 ########################################
 
 root.mainloop() # Starts Tkinter loop
