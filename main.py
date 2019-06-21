@@ -13,28 +13,34 @@ import transforms as trs
 ### Function that transforms and
 ### plots the results
 def ex_transform(*args):
-    if phaseA.get()=="" or phaseB.get()=="" or phaseC.get()=="" or freq.get()=="" or unit.get()=="" or delta.get()=="":
+    if mag_phaseA.get()=="" or mag_phaseB.get()=="" or mag_phaseC.get()=="" or freq.get()=="" or unit.get()=="" or delta.get()=="" or ang_phaseA.get()=="" or ang_phaseB.get()=="" or ang_phaseC.get()=="":
         return 0
-    
+
+    # Creates simulation time-space
     end_time = 10/float(freq.get())
     step_size = end_time/(1000)
     t = np.arange(0,end_time,step_size)
     wt = 2*np.pi*float(freq.get()) * t
-    # t = np.arange(0,6*np.pi/float(freq.get()),0.01/float(freq.get()))
-    # wt = float(freq.get())*t
+
+    # Converts user input angle from degrees to radians
+    rad_angA = float(ang_phaseA.get())*np.pi/180
+    rad_angB = float(ang_phaseB.get())*np.pi/180
+    rad_angC = float(ang_phaseC.get())*np.pi/180
+
+    # Generates the three-phase system ABC
     if mag_val.get()=="peak":
-        A = float(phaseA.get())*np.sin(wt)
-        B = float(phaseB.get())*np.sin(wt-(2*np.pi/3))
-        C = float(phaseC.get())*np.sin(wt+(2*np.pi/3))
+        A = float(mag_phaseA.get())*np.sin(wt+rad_angA)
+        B = float(mag_phaseB.get())*np.sin(wt+rad_angB)
+        C = float(mag_phaseC.get())*np.sin(wt+rad_angC)
     else:
         if mag_val.get()=="rms":
-            A = (np.sqrt(2)*float(phaseA.get()))*np.sin(wt)
-            B = (np.sqrt(2)*float(phaseB.get()))*np.sin(wt-(2*np.pi/3))
-            C = (np.sqrt(2)*float(phaseC.get()))*np.sin(wt+(2*np.pi/3))
+            A = (np.sqrt(2)*float(mag_phaseA.get()))*np.sin(wt+rad_angA)
+            B = (np.sqrt(2)*float(mag_phaseB.get()))*np.sin(wt+rad_angB)
+            C = (np.sqrt(2)*float(mag_phaseC.get()))*np.sin(wt+rad_angC)
         else:
             return 0
 
-    # apply the fault
+    # Apply the selected fault
     if fault.get() == 'Monophasic A':
         for ii in range(int(len(t)/4), int(3*len(t)/4)):
             A[ii]=0
@@ -44,24 +50,47 @@ def ex_transform(*args):
     elif fault.get() == 'Monophasic C':
         for ii in range(int(len(t)/4), int(3*len(t)/4)):
             C[ii]=0
-    elif fault.get() == 'Biphasic A-B':
+    elif fault.get() == 'Two-phase A-B-ground':
         for ii in range(int(len(t)/4), int(3*len(t)/4)):
             A[ii]=0
             B[ii]=0
-    elif fault.get() == 'Biphasic B-C':
+    elif fault.get() == 'Two-phase A-B':
+        for ii in range(int(len(t)/4), int(3*len(t)/4)):
+            A[ii]=B[ii]
+    elif fault.get() == 'Two-phase B-C-ground':
         for ii in range(int(len(t)/4), int(3*len(t)/4)):
             B[ii]=0
             C[ii]=0
-    elif fault.get() == 'Biphasic C-A':
+    elif fault.get() == 'Two-phase B-C':
+        for ii in range(int(len(t)/4), int(3*len(t)/4)):
+            B[ii]=C[ii]
+    elif fault.get() == 'Two-phase C-A-ground':
         for ii in range(int(len(t)/4), int(3*len(t)/4)):
             C[ii]=0
             A[ii]=0
+    elif fault.get() == 'Two-phase C-A':
+        for ii in range(int(len(t)/4), int(3*len(t)/4)):
+            C[ii]=A[ii]
+    elif fault.get() == 'Three-phase-ground':
+        for ii in range(int(len(t)/4), int(3*len(t)/4)):
+            C[ii]=0
+            B[ii]=0
+            A[ii]=0
+    elif fault.get() == 'Three-phase':
+        for ii in range(int(len(t)/4), int(3*len(t)/4)):
+            C[ii]=A[ii]
+            B[ii]=A[ii]
 
-
+    # Converts user input delta from degrees to radians
     delta_rad = float(delta.get())*np.pi/180 # convert delta to radians
-    # calling transformation functions
+    ## Call to transformation functions ##
+    # Clarke Transform: ABC to Alpha-Beta-0
     alpha, beta, zero1 = trs.abc_to_alphaBeta0(A,B,C)
+
+    # Clarke to Park Transform: Alpha-Beta-0 to dq0
     d, q, zero2 = trs.alphaBeta0_to_dq0(alpha, beta, zero1, wt, delta_rad)
+
+    # Inverse Park Transform: dq0 to ABC
     a,b,c = trs.dq0_to_abc(d, q, zero2, wt, delta_rad)
 
     plt.clf() # clear any previous plots
@@ -72,6 +101,8 @@ def ex_transform(*args):
     plt.plot(t, C, label="C")
     plt.ylabel(unit.get())
     plt.legend(ncol=3,loc=4)
+    plt.grid('on')
+
     # Plot the alphaBeta0 system
     plt.subplot(412)
     plt.plot(t, alpha, label="\u03B1")
@@ -79,6 +110,8 @@ def ex_transform(*args):
     plt.plot(t, zero1, label="zero")
     plt.ylabel(unit.get())
     plt.legend(ncol=3,loc=4)
+    plt.grid('on')
+
     # Plot the dq0 system
     plt.subplot(413)
     plt.plot(t, d, label="d")
@@ -87,6 +120,8 @@ def ex_transform(*args):
     plt.xlabel('Time [s]')
     plt.ylabel(unit.get())
     plt.legend(ncol=3,loc=4)
+    plt.grid('on')
+
     # Plot the abc transformed from dq0
     plt.subplot(414)
     plt.plot(t, a, label="A")
@@ -94,15 +129,16 @@ def ex_transform(*args):
     plt.plot(t, c, label="C")
     plt.ylabel(unit.get())
     plt.legend(ncol=3,loc=4)
+    plt.grid('on')
     plt.show()
 ########################################
 #### Function to validate user input
 def validate_val(char):
-    return  char=="." or char.isdigit()
+    return  char=="." or char.isdigit() or char=="-"
 ########################################
 
 root = Tk()
-root.title("Clark's and Park's Transformations")
+root.title("Clarke's and Park's Transformations")
 mainframe = ttk.Frame(root, padding="12 12 12 12")
 mainframe.grid(column=0, row=0, sticky=(N, W, E, S))
 root.columnconfigure(0, weight=1)
@@ -111,9 +147,12 @@ root.rowconfigure(0, weight=1)
 validation = mainframe.register(validate_val)
 
 ### Creating variables to store user input
-phaseA = StringVar() # stores magnitude of phase A
-phaseB = StringVar() # stores magnitude of phase B
-phaseC = StringVar() # stores magnitude of phase C
+mag_phaseA = StringVar() # stores magnitude of phase A
+ang_phaseA = StringVar() # stores angle of phase A
+mag_phaseB = StringVar() # stores magnitude of phase B
+ang_phaseB = StringVar() # stores angle of phase B
+mag_phaseC = StringVar() # stores magnitude of phase C
+ang_phaseC = StringVar() # stores angle of phase C
 freq = StringVar() # stores the system frequency os oscilation
 unit = StringVar() # stores the system unit
 fault = StringVar() # stores the system fault type
@@ -150,26 +189,41 @@ freq_entry.grid(column=2, row=3, sticky=W)
 ttk.Label(mainframe, text="Fault:").grid(column=1, row=4, sticky=E)
 fault_combobox = ttk.Combobox(mainframe, state="readonly", textvariable=fault, width=15)
 fault_combobox.grid(column=2,row=4, sticky=(W,E))
-fault_combobox['values'] = ('None','Monophasic A', 'Monophasic B', 'Monophasic C', 'Biphasic A-B','Biphasic B-C','Biphasic C-A')
+fault_combobox['values'] = ('None','Monophasic A', 'Monophasic B', 'Monophasic C', 'Two-phase A-B-ground', 'Two-phase A-B', 'Two-phase B-C-ground', 'Two-phase B-C','Two-phase C-A-ground', 'Two-phase C-A', 'Three-phase-ground', 'Three-phase')
 fault_combobox.bind('<FocusOut>', lambda e: fault_combobox.selection_clear())
 ########################################
 
-# Creates label and text entry for phase A
+# Creates label and text entry for magnitude of phase A
 ttk.Label(mainframe, text="Phase A:", padding=("10 0 0 0")).grid(column=3, row=1, sticky=E)
-phaseA_entry = ttk.Entry(mainframe, validate="key", validatecommand=(validation, '%S'), width=7, textvariable=phaseA)
-phaseA_entry.grid(column=4, row=1, sticky=(W, E), pady=3)
+mag_phaseA_entry = ttk.Entry(mainframe, validate="key", validatecommand=(validation, '%S'), width=7, textvariable=mag_phaseA)
+mag_phaseA_entry.grid(column=4, row=1, sticky=(W, E), pady=3)
+########################################
+# Creates label and text entry for angle of phase A
+ttk.Label(mainframe, text="angle:", padding=("5 0 0 0")).grid(column=5, row=1, sticky=E)
+ang_phaseA_entry = ttk.Entry(mainframe, validate="key", validatecommand=(validation, '%S'), width=7, textvariable=ang_phaseA)
+ang_phaseA_entry.grid(column=6, row=1, sticky=(W), pady=3)
 ########################################
 
-# Creates label and text entry for phase B
+# Creates label and text entry for magnitude of phase B
 ttk.Label(mainframe, text="Phase B:",padding=("10 0 0 0")).grid(column=3, row=2, sticky=E)
-phaseB_entry = ttk.Entry(mainframe, validate="key", validatecommand=(validation, '%S'), width=7, textvariable=phaseB)
-phaseB_entry.grid(column=4, row=2, sticky=(W, E), pady=3)
+mag_phaseB_entry = ttk.Entry(mainframe, validate="key", validatecommand=(validation, '%S'), width=7, textvariable=mag_phaseB)
+mag_phaseB_entry.grid(column=4, row=2, sticky=(W, E), pady=3)
+########################################
+# Creates label and text entry for angle of phase B
+ttk.Label(mainframe, text="angle:",padding=("5 0 0 0")).grid(column=5, row=2, sticky=E)
+ang_phaseB_entry = ttk.Entry(mainframe, validate="key", validatecommand=(validation, '%S'), width=7, textvariable=ang_phaseB)
+ang_phaseB_entry.grid(column=6, row=2, sticky=(W), pady=3)
 ########################################
 
-# Creates label and text entry for phase C
+# Creates label and text entry for magnitude of phase C
 ttk.Label(mainframe, text="Phase C:", padding=("10 0 0 0")).grid(column=3, row=3, sticky=E)
-phaseC_entry = ttk.Entry(mainframe, validate="key", validatecommand=(validation, '%S'), width=7, textvariable=phaseC)
-phaseC_entry.grid(column=4, row=3, sticky=(W, E), pady=3)
+mag_phaseC_entry = ttk.Entry(mainframe, validate="key", validatecommand=(validation, '%S'), width=7, textvariable=mag_phaseC)
+mag_phaseC_entry.grid(column=4, row=3, sticky=(W, E), pady=3)
+########################################
+# Creates label and text entry for angle of phase C
+ttk.Label(mainframe, text="angle:", padding=("5 0 0 0")).grid(column=5, row=3, sticky=E)
+ang_phaseC_entry = ttk.Entry(mainframe, validate="key", validatecommand=(validation, '%S'), width=7, textvariable=ang_phaseC)
+ang_phaseC_entry.grid(column=6, row=3, sticky=(W), pady=3)
 ########################################
 
 # Creates label and text entry for delta
@@ -181,7 +235,7 @@ delta_entry.grid(column=4, row=4, sticky=(W,E), pady=3)
 
 # Creates button to call transformation function
 trans_button = ttk.Button(mainframe, text="Calculte", command=ex_transform,padding=("3 3 3 3"))
-trans_button.grid(column=4, row=5, pady= 10,sticky=E)
+trans_button.grid(column=6, row=5, pady= 10,sticky=E)
 ########################################
 
 root.mainloop() # Starts Tkinter loop
