@@ -26,3 +26,24 @@ No momento de calcular a transformada de Park podemos alinhar com a fase A do no
 
 ![grafico resultante](https://www.mathworks.com/help/physmod/sps/ref/park_transform_q_model_scope_01.png)<br/>
 (fonte: [MathWorks](https://www.mathworks.com/help/physmod/sps/ref/parktransform.html))
+
+# Como usar este software
+
+A interface gráfica deste programa foi pensada para simplificar ao máximo sua utilização. Sendo assim, esta explicação será breve. Os passos para uma execução usual do programa são:
+1. Executar o arquivo main.py. Como o nome sugere, ele é o arquivo principal do programa e executa todas as instruções. Com o arquivo sendo corretamente executado, uma janela irá se abrir;
+
+2. Na janela aberta é possível inserir todos os dados do programa. ***Vale ressaltar que o programa não gerará os gráficos até que todos os campos estejam devidamente preenchidos***;
+
+3. As unidades estão explicitadas ao lado dos campos, com exceção dos campos "unit" e "Faults", que são menus de lista com opções predeterminadas.
+
+4. Os campos de texto, como "frequency [Hz]:", somente aceitam números, o caracter decimal de ponto "." e o caracter de sinal negativo "-" para evitar eventuais erros que possam atrapalhar a execução do código;
+
+5. Não há uma ordem específica na qual os dados devam ser preenchidos.
+
+6. Quando o preenchimento tiver sido realizado por completo basta clicar no botão "Calculate" para gerar os gráficos nas condições configuradas.
+
+7. Em seuida uma nova janela se abrirá para mostrar os gráficos. Esta janela é interativa, permitindo manipular o tamanho dos gráficos, aproximar ou afastar, analisar intervalos específicos, etc.
+
+8. Para salvar os gráficos basta clicar no símbolo de disquete na janela dos gráficos e escolher o formato do arquivo e onde armazená-lo. ***Atente-se que o programa não salva automaticamente estes dados!***
+
+9. Caso deseje gerar novos gráficos basta repetir as etapas de 2 a 6. ***Note que os gráficos previamente gerados serão sobrescritos, então caso queira manter os dados obtidos é importante executar o passo 8!***
