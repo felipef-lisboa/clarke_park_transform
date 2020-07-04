@@ -80,6 +80,18 @@ def ex_transform(*args):
         for ii in range(int(len(t)/4), int(3*len(t)/4)):
             C[ii]=A[ii]
             B[ii]=A[ii]
+    elif fault.get() == 'Sag A':
+        for ii in range(int(len(t)/4), int(3*len(t)/4)):
+            A[ii]=A[ii]*float(sag.get())/100
+    elif fault.get() == 'Sag AB':
+        for ii in range(int(len(t)/4), int(3*len(t)/4)):
+            A[ii]=A[ii]*float(sag.get())/100
+            B[ii]=B[ii]*float(sag.get())/100
+    elif fault.get() == 'Sag ABC':
+        for ii in range(int(len(t)/4), int(3*len(t)/4)):
+            A[ii]=A[ii]*float(sag.get())/100
+            B[ii]=B[ii]*float(sag.get())/100
+            C[ii]=C[ii]*float(sag.get())/100
 
     # Converts user input delta from degrees to radians
     delta_rad = float(delta.get())*np.pi/180 # convert delta to radians
@@ -158,6 +170,7 @@ unit = StringVar() # stores the system unit
 fault = StringVar() # stores the system fault type
 mag_val = StringVar() # stores the type of magnitude used
 delta = StringVar() # stores the angle in degrees between the A and d axis in clarke trans.
+sag= StringVar() # stores the voltage sag in % for sag faults
 ########################################
 
 # Creates label and Combobox for system unit
@@ -166,6 +179,7 @@ unit_combobox = ttk.Combobox(mainframe, state="readonly", textvariable=unit, wid
 unit_combobox.grid(column=2,row=1, sticky=(W,E))
 unit_combobox['values'] = ('Voltage [V]', 'Voltage [kV]')
 unit_combobox.bind('<FocusOut>', lambda e: unit_combobox.selection_clear())
+unit_combobox.current(0)
 ########################################
 
 # Creates label and radio buttons for magnitude selection
@@ -177,64 +191,79 @@ peak_val = ttk.Radiobutton(radio_frame, text="Peak", variable=mag_val, value="pe
 peak_val.grid(column=1, row=1, sticky=(W, E))
 rms_val = ttk.Radiobutton(radio_frame, text="RMS", variable=mag_val, value="rms")
 rms_val.grid(column=2,row=1, sticky=(W, E))
+rms_val.invoke()
 ########################################
 
 # Creates label and text entry for frequency
 ttk.Label(mainframe, text="Frequency [Hz]:").grid(column=1, row=3, sticky=W)
 freq_entry = ttk.Entry(mainframe, validate="key", validatecommand=(validation, '%S'), width=7, textvariable=freq)
 freq_entry.grid(column=2, row=3, sticky=W)
+freq_entry.insert(0, "60")
 ########################################
 
 # Creates label and Combobox for fault type
 ttk.Label(mainframe, text="Fault:").grid(column=1, row=4, sticky=E)
 fault_combobox = ttk.Combobox(mainframe, state="readonly", textvariable=fault, width=15)
 fault_combobox.grid(column=2,row=4, sticky=(W,E))
-fault_combobox['values'] = ('None','Monophasic A', 'Monophasic B', 'Monophasic C', 'Two-phase A-B-ground', 'Two-phase A-B', 'Two-phase B-C-ground', 'Two-phase B-C','Two-phase C-A-ground', 'Two-phase C-A', 'Three-phase-ground', 'Three-phase')
+fault_combobox['values'] = ('None','Monophasic A', 'Monophasic B', 'Monophasic C', 'Two-phase A-B-ground', 'Two-phase A-B', 'Two-phase B-C-ground', 'Two-phase B-C','Two-phase C-A-ground', 'Two-phase C-A', 'Three-phase-ground', 'Three-phase', 'Sag A', 'Sag AB', 'Sag ABC')
 fault_combobox.bind('<FocusOut>', lambda e: fault_combobox.selection_clear())
+fault_combobox.current(0)
 ########################################
 
 # Creates label and text entry for magnitude of phase A
 ttk.Label(mainframe, text="Phase A:", padding=("10 0 0 0")).grid(column=3, row=1, sticky=E)
 mag_phaseA_entry = ttk.Entry(mainframe, validate="key", validatecommand=(validation, '%S'), width=7, textvariable=mag_phaseA)
 mag_phaseA_entry.grid(column=4, row=1, sticky=(W, E), pady=3)
+mag_phaseA_entry.insert(0,"1")
 ########################################
 # Creates label and text entry for angle of phase A
 ttk.Label(mainframe, text="angle:", padding=("5 0 0 0")).grid(column=5, row=1, sticky=E)
 ang_phaseA_entry = ttk.Entry(mainframe, validate="key", validatecommand=(validation, '%S'), width=7, textvariable=ang_phaseA)
 ang_phaseA_entry.grid(column=6, row=1, sticky=(W), pady=3)
+ang_phaseA_entry.insert(0,"0")
 ########################################
 
 # Creates label and text entry for magnitude of phase B
 ttk.Label(mainframe, text="Phase B:",padding=("10 0 0 0")).grid(column=3, row=2, sticky=E)
 mag_phaseB_entry = ttk.Entry(mainframe, validate="key", validatecommand=(validation, '%S'), width=7, textvariable=mag_phaseB)
 mag_phaseB_entry.grid(column=4, row=2, sticky=(W, E), pady=3)
+mag_phaseB_entry.insert(0,"1")
 ########################################
 # Creates label and text entry for angle of phase B
 ttk.Label(mainframe, text="angle:",padding=("5 0 0 0")).grid(column=5, row=2, sticky=E)
 ang_phaseB_entry = ttk.Entry(mainframe, validate="key", validatecommand=(validation, '%S'), width=7, textvariable=ang_phaseB)
 ang_phaseB_entry.grid(column=6, row=2, sticky=(W), pady=3)
+ang_phaseB_entry.insert(0,"120")
 ########################################
 
 # Creates label and text entry for magnitude of phase C
 ttk.Label(mainframe, text="Phase C:", padding=("10 0 0 0")).grid(column=3, row=3, sticky=E)
 mag_phaseC_entry = ttk.Entry(mainframe, validate="key", validatecommand=(validation, '%S'), width=7, textvariable=mag_phaseC)
 mag_phaseC_entry.grid(column=4, row=3, sticky=(W, E), pady=3)
+mag_phaseC_entry.insert(0,"1")
 ########################################
 # Creates label and text entry for angle of phase C
 ttk.Label(mainframe, text="angle:", padding=("5 0 0 0")).grid(column=5, row=3, sticky=E)
 ang_phaseC_entry = ttk.Entry(mainframe, validate="key", validatecommand=(validation, '%S'), width=7, textvariable=ang_phaseC)
 ang_phaseC_entry.grid(column=6, row=3, sticky=(W), pady=3)
+ang_phaseC_entry.insert(0,"240")
 ########################################
 
 # Creates label and text entry for delta
 ttk.Label(mainframe, text="delta [degrees]:", padding=("10 0 0 0")).grid(column=3, row=4, sticky=E)
 delta_entry = ttk.Entry(mainframe, validate="key", validatecommand=(validation, '%S'), width=7, textvariable=delta)
 delta_entry.grid(column=4, row=4, sticky=(W,E), pady=3)
+delta_entry.insert(0,"0")
 ########################################
+# Creates label and tesxt entry for sag
+ttk.Label(mainframe, text="sag %:", padding=("5 0 0 0")).grid(column=5, row=4, sticky=E)
+sag_entry = ttk.Entry(mainframe, validate="key", validatecommand=(validation, '%S'), width=7, textvariable=sag)
+sag_entry.grid(column=6, row=4, sticky=(W), pady=3)
+sag_entry.insert(0,"50")
 
 
 # Creates button to call transformation function
-trans_button = ttk.Button(mainframe, text="Calculte", command=ex_transform,padding=("3 3 3 3"))
+trans_button = ttk.Button(mainframe, text="Calculate", command=ex_transform,padding=("3 3 3 3"))
 trans_button.grid(column=6, row=5, pady= 10,sticky=E)
 ########################################
 
